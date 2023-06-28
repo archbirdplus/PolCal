@@ -1,0 +1,13 @@
+
+Print Add 1 Multiply 3 4 # 1 + 3*4 = 13
+# Simple arithmetics
+
+# exists a prime that divides 10 (true)
+Exists prime = 0 % prime 10 [2, 3, 5, 7, 11]
+
+# filter primes that divide 10 ([2, 5])
+Filter prime = 0 % prime 10 [2, 3, 5, 7, 11]
+
+# same as before, but swapped ([2, 5])
+Swap Filter [2, 3, 5, 7, 11] prime = 0 % prime 10
+
