@@ -6,19 +6,15 @@ let standardLibrary: [String: PolCalValue] = [
     "3": .integer(3),
     "4": .integer(4),
     "5": .integer(5),
-    "Add": .function(PolCalFunction(name: "Add", arity: 2) { v in
-        guard case let .integer(x) = v else { precondition(false) }
-        return .function(PolCalFunction(name: "(Add \(x))", arity: 1) { v in
-            guard case let .integer(y) = v else { precondition(false) }
-            return .integer(x + y)
-        })
+    "Add": .unbound(PolCalFunction(name: "Add", arity: 2) { args in
+        guard case let .integer(x) = args[0] else { precondition(false) }
+        guard case let .integer(y) = args[1] else { precondition(false) }
+        return .integer(x + y)
     }),
-    "Multiply": .function(PolCalFunction(name: "Multiply", arity: 2) { v in
-        guard case let .integer(x) = v else { precondition(false) }
-        return .function(PolCalFunction(name: "(Multiply \(x)", arity: 1) { v in
-            guard case let .integer(y) = v else { precondition(false) }
-            return .integer(x * y)
-        })
+    "Multiply": .unbound(PolCalFunction(name: "Multiply", arity: 2) { args in
+        guard case let .integer(x) = args[0] else { precondition(false) }
+        guard case let .integer(y) = args[1] else { precondition(false) }
+        return .integer(x * y)
     })
 ]
 

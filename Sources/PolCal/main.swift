@@ -9,16 +9,16 @@ guard args.count > 1 else {
 var file = try! String(contentsOf: URL(fileURLWithPath: args[1]))
 
 print(PolCalRuntime.execute(file, api: [
-    "Print": .function(PolCalFunction(name: "Print", arity: 1) { v in
+    "Print": .unbound(PolCalFunction(name: "Print", arity: 1) { v in
         print(v)
-        return v
+        return v[0]
     }),
     // TODO: return read string once strings are implemented
-    "Read": .function(PolCalFunction(name: "Read", arity: 0) { v in
+    "Read": .unbound(PolCalFunction(name: "Read", arity: 0) { v in
         let _ = readLine()
         return .none
     }),
-    "Error": .function(PolCalFunction(name: "Error", arity: 1) { v in
+    "Error": .unbound(PolCalFunction(name: "Error", arity: 1) { v in
         print("[ERROR THROWN]", v)
         return .none
     }),
