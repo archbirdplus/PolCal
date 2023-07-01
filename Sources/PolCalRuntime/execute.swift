@@ -1,20 +1,33 @@
 import Foundation
 
 let standardLibrary: [String: PolCalValue] = [
-    "1": .integer(1),
-    "2": .integer(2),
-    "3": .integer(3),
-    "4": .integer(4),
-    "5": .integer(5),
     "Add": .unbound(PolCalFunction(name: "Add", arity: 2) { args in
-        guard case let .integer(x) = args[0] else { precondition(false) }
-        guard case let .integer(y) = args[1] else { precondition(false) }
-        return .integer(x + y)
+        switch (args[0], args[1]) {
+        case let (.integer(x), .integer(y)):
+            return .integer(x + y)
+        case let (.double(x), .double(y)):
+            return .double(x + y)
+        case let (.double(x), .integer(y)):
+            return .double(x + Double(y))
+        case let (.integer(x), .double(y)):
+            return .double(Double(x) + y)
+        default:
+            precondition(false)
+        }
     }),
     "Multiply": .unbound(PolCalFunction(name: "Multiply", arity: 2) { args in
-        guard case let .integer(x) = args[0] else { precondition(false) }
-        guard case let .integer(y) = args[1] else { precondition(false) }
-        return .integer(x * y)
+        switch (args[0], args[1]) {
+        case let (.integer(x), .integer(y)):
+            return .integer(x * y)
+        case let (.double(x), .double(y)):
+            return .double(x * y)
+        case let (.double(x), .integer(y)):
+            return .double(x * Double(y))
+        case let (.integer(x), .double(y)):
+            return .double(Double(x) * y)
+        default:
+            precondition(false)
+        }
     })
 ]
 
@@ -27,12 +40,12 @@ func tokenize(_ string: String) -> [String] {
 func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expression {
     let x = iterator.next()! // what to do? the parent function needs to be curried for such a premature end
     guard case let .function(f) = x else {
-        return Expression(string: String(describing: x)) { x }
+        return Expression(string: x.toString()) { x }
     }
     // preumably application-stoppers such as <closing paren> get checked here
     let values = (0..<f.arity).map { _ in nextExpression(&iterator) }
     return Expression(
-        string: "\(f.name)(\(values.map { v in v.string }.joined(separator: ", ")))"
+        string: "\(f.name)\(values.map { v in "(\(v.string))" }.joined())"
     ) {
         values.reduce(x) { r, v in
             guard case let .function(f) = r else { precondition(false) }
@@ -44,7 +57,11 @@ func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expres
 
 func prepareComputation(_ tokens: [String], library: [String: PolCalValue]) -> Expression {
     let funcs = tokens
-        .map { tok in library[tok] }
+        .map { tok in
+            library[tok] ??
+            Int(tok).map(PolCalValue.integer) ??
+            Double(tok).map(PolCalValue.double)
+        }
         .prefix { x in x != nil }
         .compactMap { x in x }
     var iterator = funcs.makeIterator()
@@ -56,7 +73,7 @@ public func execute(_ string: String, api: [String: PolCalValue]) -> PolCalValue
     // custom API may override standard library
     let library = standardLibrary.merging(api) { (_, new) in new }
     let expression = prepareComputation(tokens, library: library)
-    print(expression.string)
+    print("expression string: \(expression.string)")
     let value = expression.thunk()
     if case let .function(f) = value {
         return f.apply(.integer(69)) // give input here?

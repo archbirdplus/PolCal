@@ -23,7 +23,7 @@ public struct BoundFunction: Equatable {
     let args: [PolCalValue]
 
     var name: String {
-        "(\(base) bound [\(args.map { x in "\(x)" }.joined(separator: ", "))])"
+        "(\(base.name)\(args.map { x in "(\(x.toString()))" }.joined()))"
     }
     var arity: Int { base.arity - args.count }
 
@@ -35,7 +35,7 @@ public struct BoundFunction: Equatable {
     func apply(_ val: PolCalValue) -> PolCalValue {
         var tmp = args
         tmp.append(val)
-        if arity > 1 {
+        if tmp.count < base.arity {
             return .function(BoundFunction(base, args: tmp))
         } else {
             return base.apply(tmp)
@@ -51,6 +51,19 @@ public enum PolCalValue: Equatable {
 
     public static func unbound(_ base: PolCalFunction) -> PolCalValue {
         return .function(BoundFunction(base))
+    }
+
+    func toString() -> String {
+        switch self {
+        case .none:
+            return "none"
+        case let .integer(x):
+            return String(x)
+        case let .double(x):
+            return String(x)
+        case let .function(x):
+            return x.name
+        }
     }
 }
 
