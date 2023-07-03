@@ -1,6 +1,23 @@
 
 public typealias PolCalInt = Int
 
+public enum ParseError: Error {
+    case unresolved([String])
+}
+
+public enum Symbol {
+    case value(PolCalValue)
+    case argument(String)
+    case openParen
+    case closeParen
+}
+
+public enum Token {
+    case word(String)
+    case openParen
+    case closeParen
+}
+
 // This implements the n-arity function. Currying is done automatically by
 // BoundFunction.apply.
 public struct PolCalFunction: Equatable {
@@ -48,6 +65,11 @@ public enum PolCalValue: Equatable {
     case integer(PolCalInt)
     case double(Double)
     case function(BoundFunction)
+
+    var function: BoundFunction? {
+        if case let .function(f) = self { return f }
+        else { return nil }
+    }
 
     public static func unbound(_ base: PolCalFunction) -> PolCalValue {
         return .function(BoundFunction(base))

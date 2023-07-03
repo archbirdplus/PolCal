@@ -31,11 +31,65 @@ let standardLibrary: [String: PolCalValue] = [
     })
 ]
 
-func tokenize(_ string: String) -> [String] {
-    string
-        .components(separatedBy: CharacterSet(charactersIn: " \n"))
-        .filter { x in x != "" }
+func tokenize(_ string: String) -> [Token] {
+    var tokens: [Token] = []
+    var tmp = ""
+    for char in string {
+        // TODO: array brackets would be parsed here
+        switch char {
+        case " ", "\n":
+            tokens.append(.word(tmp))
+            tmp = ""
+        case "(":
+            tokens.append(.word(tmp))
+            tokens.append(.openParen)
+            tmp = ""
+        case ")":
+            tokens.append(.word(tmp))
+            tokens.append(.closeParen)
+            tmp = ""
+        default:
+            tmp.append(char)
+        }
+    }
+    tokens.append(.word(tmp))
+    return tokens.filter { x in
+        if case let .word(str) = x { return str != "" } else { return true }
+    }
 }
+
+func resolveSymbols(_ tokens: [Token], library: [String: PolCalValue]) -> [Symbol] {
+    let symbols: [Symbol] = tokens.map { tok in
+        switch tok {
+        case let .word(name):
+            let v = library[name] ??
+                Int(name).map(PolCalValue.integer) ??
+                Double(name).map(PolCalValue.double)
+            if let value = v { return .value(value) }
+            return .argument(name)
+        case .openParen:
+            return .openParen
+        case .closeParen:
+            return .closeParen
+        }
+    }
+    return symbols
+}
+
+/*
+func topLevelExpression(_ symbols: [String], library: [String: PolCalValue]) -> Expression {
+    let funcs = tokens
+        .map { tok in
+            library[tok] ??
+            Int(tok).map(PolCalValue.integer) ??
+            Double(tok).map(PolCalValue.double)
+        }
+        .prefix { x in x != nil }
+        .compactMap { x in x }
+    var iterator = funcs.makeIterator()
+    return nextExpression(&iterator)
+}
+*/
 
 func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expression {
     let x = iterator.next()! // what to do? the parent function needs to be curried for such a premature end
@@ -55,29 +109,17 @@ func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expres
     }
 }
 
-func prepareComputation(_ tokens: [String], library: [String: PolCalValue]) -> Expression {
-    let funcs = tokens
-        .map { tok in
-            library[tok] ??
-            Int(tok).map(PolCalValue.integer) ??
-            Double(tok).map(PolCalValue.double)
-        }
-        .prefix { x in x != nil }
-        .compactMap { x in x }
-    var iterator = funcs.makeIterator()
-    return nextExpression(&iterator)
-}
-
+// TODO: may need to throw if parse errors can physically occur
 public func execute(_ string: String, api: [String: PolCalValue]) -> PolCalValue {
     let tokens = tokenize(string)
     // custom API may override standard library
     let library = standardLibrary.merging(api) { (_, new) in new }
-    let expression = prepareComputation(tokens, library: library)
+    let symbols = resolveSymbols(tokens, library: library)
+    // let expression = prepareComputation(tokens, library: library)
+    let expression = Expression.topLevel(symbols)
     print("expression string: \(expression.string)")
     let value = expression.thunk()
-    if case let .function(f) = value {
-        return f.apply(.integer(69)) // give input here?
-    }
+    // if value is a function, the user may choose to pass arguments to it
     return value
 }
 

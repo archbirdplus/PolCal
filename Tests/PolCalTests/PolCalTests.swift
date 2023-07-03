@@ -10,6 +10,12 @@ final class PolCalTests: XCTestCase {
                 arity: 1) { v in
                     logs.append(v[0].toString())
                     return v[0]
+                }),
+            "Repeat": .unbound(PolCalFunction(
+                name: "Repeat",
+                arity: 2) { v in
+                    guard case let .integer(t) = v[0] else { fatalError("Repeat abuse.") }
+                    return (0..<t).map { x in v[1].function!.apply(.integer(x)) }.last ?? .none
                 })
         ]
         let ret = PolCalRuntime.execute(code, api: api)
@@ -67,6 +73,18 @@ final class PolCalTests: XCTestCase {
             ("Multiply 3 4.0", (.double(d12), "")),
             ("Multiply 3.0 4.0", (.double(d12), "")),
             ("Multiply 3.0 -4.0", (.double(3.0 * -4.0), "")),
+        ]
+        check(cases)
+    }
+
+    func testCurrying() {
+        let Add = standardLibrary["Add"]!.function!
+        let Multiply = standardLibrary["Multiply"]!.function!
+        let cases: [(String, (PolCalValue, String))] = [
+            ("Add 3", (Add.apply(.integer(3)), "")),
+            ("(Add 3) 4", (.integer(7), "")),
+            ("Repeat 3 ( Print )", (.integer(2), "0\n1\n2")),
+            ("Add Multiply 3", (Add.apply(Multiply.apply(.integer(3))), ""))
         ]
         check(cases)
     }
