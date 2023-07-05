@@ -13,7 +13,7 @@ extension Expression {
         return Expression(
             string: "(\(list.map { v in "(\(v.string))" }.joined()))"
         ) {
-            return list.suffix(list.count-1).reduce(list.first.map { $0.thunk() } ?? .none) { r, x in r.function!.apply(x.thunk()) }
+            return list.suffix(list.count-1).reduce(list.first.map { $0.thunk() } ?? .none) { r, x in r.function?.apply(x.thunk()) ?? { print(r); return x.thunk() }() }
         }
     }
 

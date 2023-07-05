@@ -28,7 +28,17 @@ let standardLibrary: [String: PolCalValue] = [
         default:
             precondition(false)
         }
-    })
+    }),
+    "True": .unbound(PolCalFunction(
+        name: "True",
+        arity: 2) { v in return v[0] }),
+    "False": .unbound(PolCalFunction(
+        name: "False",
+        arity: 2) { v in return v[1] }),
+    "Equal": .unbound(PolCalFunction(
+        name: "Equal",
+        arity: 2) { v in v[0] == v[1] ? standardLibrary["True"]! : standardLibrary["False"]! })
+
 ]
 
 func tokenize(_ string: String) -> [Token] {
