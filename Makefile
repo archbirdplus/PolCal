@@ -1,10 +1,10 @@
 
 clean:
-	rm -r ./.build/debug/PolCalPackageTests.xctest
+	rm -rf ./.build/debug/PolCalPackageTests.xctest
 
 ./.build/debug/PolCalPackageTests.xctest:
 	echo "rebuilding .xctest file"
-	swift test --filter "$a"
+	swift test -Xswiftc -g --filter "$a"
 
 test:
 	@swift test | sed -E " \

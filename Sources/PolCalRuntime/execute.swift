@@ -1,46 +1,5 @@
 import Foundation
 
-let standardLibrary: [String: PolCalValue] = [
-    "Add": .unbound(PolCalFunction(name: "Add", arity: 2) { args in
-        switch (args[0], args[1]) {
-        case let (.integer(x), .integer(y)):
-            return .integer(x + y)
-        case let (.double(x), .double(y)):
-            return .double(x + y)
-        case let (.double(x), .integer(y)):
-            return .double(x + Double(y))
-        case let (.integer(x), .double(y)):
-            return .double(Double(x) + y)
-        default:
-            precondition(false)
-        }
-    }),
-    "Multiply": .unbound(PolCalFunction(name: "Multiply", arity: 2) { args in
-        switch (args[0], args[1]) {
-        case let (.integer(x), .integer(y)):
-            return .integer(x * y)
-        case let (.double(x), .double(y)):
-            return .double(x * y)
-        case let (.double(x), .integer(y)):
-            return .double(x * Double(y))
-        case let (.integer(x), .double(y)):
-            return .double(Double(x) * y)
-        default:
-            precondition(false)
-        }
-    }),
-    "True": .unbound(PolCalFunction(
-        name: "True",
-        arity: 2) { v in return v[0] }),
-    "False": .unbound(PolCalFunction(
-        name: "False",
-        arity: 2) { v in return v[1] }),
-    "Equal": .unbound(PolCalFunction(
-        name: "Equal",
-        arity: 2) { v in v[0] == v[1] ? standardLibrary["True"]! : standardLibrary["False"]! })
-
-]
-
 func tokenize(_ string: String) -> [Token] {
     var tokens: [Token] = []
     var tmp = ""
@@ -99,7 +58,6 @@ func topLevelExpression(_ symbols: [String], library: [String: PolCalValue]) -> 
     var iterator = funcs.makeIterator()
     return nextExpression(&iterator)
 }
-*/
 
 func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expression {
     let x = iterator.next()! // what to do? the parent function needs to be curried for such a premature end
@@ -118,6 +76,7 @@ func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expres
         }
     }
 }
+*/
 
 // TODO: may need to throw if parse errors can physically occur
 public func execute(_ string: String, api: [String: PolCalValue]) -> PolCalValue {
@@ -128,7 +87,7 @@ public func execute(_ string: String, api: [String: PolCalValue]) -> PolCalValue
     // let expression = prepareComputation(tokens, library: library)
     let expression = Expression.topLevel(symbols)
     print("expression string: \(expression.string)")
-    let value = expression.thunk()
+    let value = expression.thunk([])
     // if value is a function, the user may choose to pass arguments to it
     return value
 }

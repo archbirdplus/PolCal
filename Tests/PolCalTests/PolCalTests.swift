@@ -35,6 +35,33 @@ final class PolCalTests: XCTestCase {
         }
     }
 
+    func checkParseExpression(_ cases: [(String, String)]) {
+        let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".map(String.init)
+        let digits = "0123456789".map(String.init)
+        var library = standardLibrary
+        alphabet.forEach { name in
+            library[name] = .unbound(PolCalFunction(
+                name: name,
+                arity: 0) { _ in
+                .none
+            })
+        }
+        digits.forEach {
+            name in library[name] = .unbound(PolCalFunction(
+                name: name,
+                arity: Int(name)!) { _ in
+                    .none 
+                })
+        }
+        cases.forEach { pair in
+            let (code, parsed) = pair
+            let tokens = tokenize(code)
+            let symbols = resolveSymbols(tokens, library: library)
+            let expression = Expression.topLevel(symbols)
+            XCTAssertEqual(expression.string, parsed, "while parsing \(code)")
+        }
+    }
+
     func testNormalApplicationOrder() {
         let cases: [(String, (PolCalValue, String))] = [
             ("Add 1 Multiply 3 4", (.integer(13), "")),
@@ -55,6 +82,21 @@ final class PolCalTests: XCTestCase {
             ("3.14", (.double(3.14), "")),
         ]
         check(cases)
+    }
+
+    func testParenParsing() {
+        let cases: [(String, String)] = [
+            ("(A B) C", "((A B) C)"),
+            ("1 B C", "((1 B) C)"),
+            ("2 (B C) 2 (A) B", "((2 (B C) (2 (A) B)))"),
+            ("(a a a)", "((a -> (get a) a -> ()))"),
+            ("2 (x (x A))", "((2 (x -> ((get x) A))))"),
+            ("2 (x (2 x))", "((2 (x -> ((2 (get x))))))"),
+            ("2 x (2 x)", "((2 x -> ((2 (get x)))))"),
+            ("2 x (2 x) A", "((2 x -> ((2 (get x))) A))"),
+            ("2 (2 A) B", "((2 ((2 A)) B))"),
+        ]
+        checkParseExpression(cases)
     }
 
     func testAddition() {
@@ -99,20 +141,50 @@ final class PolCalTests: XCTestCase {
         let cases: [(String, (PolCalValue, String))] = [
             ("x (Add x) 3", (Add.apply(.integer(3)), "")),
             ("x (Add x) 3 4", (.integer(7), "")),
+            ("(x (Add x)) 3 4", (.integer(7), "")),
             ("x Multiply (Add x 3) 4 7", (.integer((3 + 7)*4), "")),
         ]
         check(cases)
     }
 
-    func testAckerman() {
-        let True = standardLibrary["True"]!
+    func testLazy() {
         let cases: [(String, (PolCalValue, String))] = [
-            // This one doesn't fully apply A so that eager evaluation works
-            ("Equal 61 (((A A A) A m n (Equal m 0 (y + n 1) (x A A - 1 m Equal n 0 1 (A A m - 1 n))) 0) 3 3)", (True, "")),
-            // This one requires the boolean functions to be lazy
-            ("Equal 61 (((A A A) A m n Equal m 0 + n 1 (A A - 1 m Equal n 0 1 (A A m - 1 n))) 3 3)", (True, "")),
+            // Equal :: A -> B -> Boolean -> X -> Y should only evaluate
+            // either X or Y
+            ("Equal 0 1 Print 1 Print 2", (.integer(2), "2")),
+            ("True Print 1 Print 2", (.integer(1), "1")),
+            // thunk version
+            ("Equal 0 1 x Print 1 x Print 2 0", (.integer(2), "2")),
+            // make sure it's not just lazy because of application order
+            ("(consequent alternative condition (condition consequent alternative)) (Print 1) (Print 2) (True)", (.integer(1), "1")),
         ]
         check(cases)
     }
+
+    func testFact() {
+        let cases: [(String, (PolCalValue, String))] = [
+            // this is thunked and will work
+            ("(fact (fact fact)) (fact x (= 0 x z 1 (z * x (fact fact (- 1 x))) 99)) 5",
+                (.integer(5*4*3*2*1), "")),
+            // this will not halt until laziness is implemented properly
+            ("(fact (fact fact)) (fact x (= 0 x 1 (* x (fact fact (- 1 Print x))))) 5",
+                (.integer(5*4*3*2*1), ""))
+        ]
+        check(cases)
+    }
+
+    /* func testAckerman() {
+        let True = standardLibrary["True"]!
+        let ack1 = "(A (A A) A m n Print ((Equal m 0 (y + n 1) (x A A - 1 m (Equal n 0 1 (A A m - 1 n)))) 0)) 3 3"
+        let parsed = Expression.topLevel(resolveSymbols(tokenize(ack1), library: standardLibrary)).string
+        XCTAssertEqual(parsed, "(((A ((A)(A)) A -> (m -> (n -> ((Equal)(m)(0))(y -> ((Add)(get n)(1)))(x -> ((A)(A)((Sub)(1)(m))((Equal)(get n)(0)((A)(A)(m)((Sub)(1)(n))))))(0) (3)(3)")
+        let cases: [(String, (PolCalValue, String))] = [
+            // This one doesn't fully apply A so that eager evaluation works
+            (ack1, (.integer(61), "")),
+            // This one requires the boolean functions to be lazy
+            ("(((A A A) A m n Equal m 0 + n 1 (A A - 1 m Equal n 0 1 (A A m - 1 n))) 3 3)", (.integer(61), "")),
+        ]
+        check(cases)
+    }*/
 
 }

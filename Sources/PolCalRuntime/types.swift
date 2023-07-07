@@ -40,7 +40,9 @@ public struct BoundFunction: Equatable {
     let args: [PolCalValue]
 
     var name: String {
-        "(\(base.name)\(args.map { x in "(\(x.toString()))" }.joined()))"
+        args.isEmpty ?
+            base.name :
+            "(\(base.name)\(args.map { x in "(\(x.toString()))" }.joined()))"
     }
     var arity: Int { base.arity - args.count }
 
@@ -60,7 +62,7 @@ public struct BoundFunction: Equatable {
     }
 }
 
-public enum PolCalValue: Equatable {
+public enum PolCalValue: Equatable, CustomDebugStringConvertible {
     case none
     case integer(PolCalInt)
     case double(Double)
@@ -87,10 +89,12 @@ public enum PolCalValue: Equatable {
             return x.name
         }
     }
+
+    public var debugDescription: String { toString() }
 }
 
 public struct Expression {
     let string: String
-    let thunk: () -> PolCalValue
+    let thunk: ([(String, PolCalValue)]) -> PolCalValue
 }
 
