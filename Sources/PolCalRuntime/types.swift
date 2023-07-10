@@ -1,12 +1,76 @@
 
 public typealias PolCalInt = Int
 
-public enum ParseError: Error {
-    case unresolved([String])
+public struct GlobalName {
+    public let i: Int
+    public let str: String
+}
+public typealias ArgumentName = GlobalName // same thing but different
+
+public enum Name {
+    case global(GlobalName)
+    case argument(ArgumentName)
+
+    public var str: String {
+        switch self {
+        case let .global(x):
+            return x.str
+        case let .argument(x):
+            return x.str
+        }
+    }
+}
+
+public struct SyntaxStyle {
+    public let name: Name
+    public let arity: Int
+}
+
+public protocol Language {
+    associatedtype Code
+}
+
+struct LiteralFun {
+    let name: Name
+    let literal: PolCalValue
+
+    init(_ name: Name, _ literal: PolCalValue) {
+        self.name = name
+        self.literal = literal
+    }
+}
+
+public struct Fun<L: Language> {
+    let name: Name
+    let syntax: SyntaxStyle
+    let code: L.Code
+
+    init(syntax: SyntaxStyle, code: L.Code) {
+        name = syntax.name
+        self.syntax = syntax
+        self.code = code
+    }
+}
+
+public indirect enum ParseNode: CustomDebugStringConvertible {
+    case name(Name) // for now, numbers will be thunked as () -> Int
+    case apply([ParseNode])
+    case closure(ArgumentName, ParseNode)
+
+    public var debugDescription: String {
+        switch self {
+        case let .name(name):
+            return name.str
+        case let .apply(nodes):
+            return "[\(nodes.map { n in n.debugDescription }.joined(separator: " "))]"
+        case let .closure(x, node):
+            return "\(x.str) -> \(node.debugDescription)"
+        }
+    }
 }
 
 public enum Symbol {
-    case value(PolCalValue)
+    case value(SyntaxStyle)
     case argument(String)
     case openParen
     case closeParen

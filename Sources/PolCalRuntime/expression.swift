@@ -1,6 +1,7 @@
 
 func impostor() { }
 
+/*
 extension Expression {
     static func topLevel(_ symbols: [Symbol]) -> Expression {
         var iterator = SymbolIterator(symbols)
@@ -15,7 +16,6 @@ extension Expression {
         // A node terminated by a parenthesis will have the paren consume here.
         // Nothing will happen if the node is terminated by the end of the file.
         symbols.consumeParen()
-        print("The length of the list is \(list.count)")
         return Expression(
             string: "(\(list.map { v in "\(v.string)" }.joined(separator: " ")))"
         ) { scope in
@@ -77,4 +77,4 @@ extension Expression {
         }
     }
 }
-
+*/

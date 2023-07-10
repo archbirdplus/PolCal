@@ -20,7 +20,6 @@ let functions = [
     PolCalFunction(name: "Sub", arity: 2) { args in
         switch (args[0], args[1]) {
         case let (.integer(x), .integer(y)):
-            print("Sub => now \(y - x)") // for debugging fact test
             return .integer(y - x)
         case let (.double(x), .double(y)):
             return .double(y - x)
@@ -29,7 +28,7 @@ let functions = [
         case let (.integer(x), .double(y)):
             return .double(y - Double(x))
         default:
-            precondition(false)
+            fatalError("Sub unsubbable \(args[0]) \(args[1])")
         }
     },
     PolCalFunction(name: "Multiply", arity: 2) { args in
@@ -44,7 +43,7 @@ let functions = [
             return .double(Double(x) * y)
         default:
             impostor()
-            precondition(false)
+            fatalError("Multiplication failed due to types \(args[0]) * \(args[1])")
         }
     },
     True,

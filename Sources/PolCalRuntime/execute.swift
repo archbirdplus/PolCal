@@ -27,14 +27,18 @@ func tokenize(_ string: String) -> [Token] {
     }
 }
 
-func resolveSymbols(_ tokens: [Token], library: [String: PolCalValue]) -> [Symbol] {
+func resolveSymbols(_ tokens: [Token], syntaxes: [String: SyntaxStyle]) -> ([LiteralFun], [Symbol]) {
+    var litFuns: [LiteralFun] = []
     let symbols: [Symbol] = tokens.map { tok in
         switch tok {
         case let .word(name):
-            let v = library[name] ??
-                Int(name).map(PolCalValue.integer) ??
-                Double(name).map(PolCalValue.double)
-            if let value = v { return .value(value) }
+            if let v = syntaxes[name] { return .value(v) }
+            if let v = Int(name).map(PolCalValue.integer) ??
+                Double(name).map(PolCalValue.double) {
+                let name = Name.global(GlobalName(i: litFuns.count, str: name))
+                litFuns.append(LiteralFun(name, v))
+                return .value(SyntaxStyle(name: name, arity: 0))
+            }
             return .argument(name)
         case .openParen:
             return .openParen
@@ -42,7 +46,7 @@ func resolveSymbols(_ tokens: [Token], library: [String: PolCalValue]) -> [Symbo
             return .closeParen
         }
     }
-    return symbols
+    return (litFuns, symbols)
 }
 
 /*
@@ -78,6 +82,7 @@ func nextExpression(_ iterator: inout IndexingIterator<[PolCalValue]>) -> Expres
 }
 */
 
+/*
 // TODO: may need to throw if parse errors can physically occur
 public func execute(_ string: String, api: [String: PolCalValue]) -> PolCalValue {
     let tokens = tokenize(string)
@@ -86,9 +91,9 @@ public func execute(_ string: String, api: [String: PolCalValue]) -> PolCalValue
     let symbols = resolveSymbols(tokens, library: library)
     // let expression = prepareComputation(tokens, library: library)
     let expression = Expression.topLevel(symbols)
-    print("expression string: \(expression.string)")
     let value = expression.thunk([])
     // if value is a function, the user may choose to pass arguments to it
     return value
 }
+*/
 

@@ -8,6 +8,7 @@ guard args.count > 1 else {
 }
 var file = try! String(contentsOf: URL(fileURLWithPath: args[1]))
 
+/*
 print(PolCalRuntime.execute(file, api: [
     "Print": .unbound(PolCalFunction(name: "Print", arity: 1) { v in
         print(v)
@@ -23,4 +24,4 @@ print(PolCalRuntime.execute(file, api: [
         return .none
     }),
 ]))
-
+*/
