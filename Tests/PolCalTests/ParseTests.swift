@@ -1,7 +1,7 @@
 import XCTest
 @testable import PolCalRuntime
 
-final class PolCalTests: XCTestCase {
+final class ParseTests: XCTestCase {
 
     func checkParse(_ cases: [(String, String)]) {
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".map(String.init)
