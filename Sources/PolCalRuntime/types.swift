@@ -1,7 +1,7 @@
 
 public typealias PolCalInt = Int
 
-public struct GlobalName {
+public struct GlobalName: Hashable {
     public let i: Int
     public let str: String
 }
@@ -28,26 +28,32 @@ public struct SyntaxStyle {
 
 public protocol Language {
     associatedtype Code
+    static func ret() -> Code // static stored properties not supported in generic types
 }
 
-struct LiteralFun {
+// language-agnostic literal thunk
+public struct LiteralFun {
     let name: Name
     let literal: PolCalValue
-
-    init(_ name: Name, _ literal: PolCalValue) {
-        self.name = name
-        self.literal = literal
-    }
 }
 
 public struct Fun<L: Language> {
     let name: Name
     let syntax: SyntaxStyle
     let code: L.Code
+    let data: PolCalValue?
+
+    init(_ litFun: LiteralFun) {
+        self.name = litFun.name
+        self.data = litFun.literal
+        self.syntax = SyntaxStyle(name: name, arity: 0)
+        self.code = L.ret()
+    }
 
     init(syntax: SyntaxStyle, code: L.Code) {
         name = syntax.name
         self.syntax = syntax
+        self.data = nil
         self.code = code
     }
 }

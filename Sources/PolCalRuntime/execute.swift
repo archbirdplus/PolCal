@@ -36,7 +36,7 @@ func resolveSymbols(_ tokens: [Token], syntaxes: [String: SyntaxStyle]) -> ([Lit
             if let v = Int(name).map(PolCalValue.integer) ??
                 Double(name).map(PolCalValue.double) {
                 let name = Name.global(GlobalName(i: litFuns.count, str: name))
-                litFuns.append(LiteralFun(name, v))
+                litFuns.append(LiteralFun(name: name, literal: v))
                 return .value(SyntaxStyle(name: name, arity: 0))
             }
             return .argument(name)

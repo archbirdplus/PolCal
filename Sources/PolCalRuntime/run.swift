@@ -3,14 +3,16 @@ struct SwiftInterpreted: Language {
     struct Code {
         let thunk: (StgTable, inout StgCell) -> PolCalValue
     }
-    static func ret(_ table: StgTable, _ cell: inout StgCell) -> PolCalValue {
-        return cell.data!
+    static func ret() -> Code {
+        Code { (_ table: StgTable, _ cell: inout StgCell) -> PolCalValue in
+            return cell.data!
+        }
     }
 }
 
 struct StgCell {
     var thunk: (StgTable, inout StgCell) -> PolCalValue // cell contains  self-modifying code
-    var data: PolCalValue? = nil
+    var data: PolCalValue?
     var arity: Int
     var args: [Int] = []
 
@@ -47,24 +49,13 @@ class StgTable {
 // also, add closure fun -> stgcell because closures are user-defined and
 // so can't be lumped with the other funs
 
-func addLiteralCells(_ funs: [LiteralFun], _ table: StgTable) {
-    funs.forEach { fun in
-        table.append(
-            StgCell(
-                thunk: SwiftInterpreted.ret,
-                data: fun.literal,
-                arity: 0
-            )
-        )
-    }
-}
-
 func addGlobalCells(_ funs: [Fun<SwiftInterpreted>], _ table: StgTable) {
 // , _ litFuns: [LiteralFun], _ closureFuns: [ClosureFun]) {
     funs.forEach { fun in
         table.append(
             StgCell(
                 thunk: fun.code.thunk,
+                data: fun.data,
                 arity: fun.syntax.arity
             )
         )
